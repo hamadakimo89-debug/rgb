@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Untitled</title>
+    <link rel="stylesheet" href="./style.css">
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة باقات الموبايل - للجروب</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 30px; }
+        h1 { text-align: center; color: #4a5568; margin-bottom: 30px; }
+        .network-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab { padding: 12px 20px; border: none; border-radius: 25px; cursor: pointer; background: #e2e8f0; transition: all 0.3s; font-weight: bold; }
+        .tab.active { background: #3182ce; color: white; }
+        form { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        input, select, button { padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px; }
+        button { background: #48bb78; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.3s; }
+        button:hover { background: #38a169; }
+        button.danger { background: #f56565; }
+        button.danger:hover { background: #e53e3e; }
+        .booking { background: #c6f6d5; padding: 15px; border-radius: 8px; margin: 10px 0; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
+        .stat-card { background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 12px; text-align: center; }
+        .monthly-filter { margin: 20px 0; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f7fafc; font-weight: bold; }
+        .poster-section { margin-top: 30px; padding-top: 30px; border-top: 2px dashed #cbd5e0; }
+        #posterCanvas { border: 2px dashed #4299e1; border-radius: 10px; max-width: 100%; height: 400px; background: white; }
+        .total-budget { font-size: 24px; font-weight: bold; text-align: center; color: #38a169; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 إدارة باقات الموبايل للجروب</h1>
+        
+        <div class="network-tabs">
+            <button class="tab active" data-network="all">الكل</button>
+            <button class="tab" data-network="vodafone">فودافون</button>
+            <button class="tab" data-network="orange">أورانج</button>
+            <button class="tab" data-network="etisalat">اتصالات</button>
+            <button class="tab" data-network="we">WE</button>
+        </div>
+
+        <form id="bookingForm">
+            <input type="text" id="phone" placeholder="رقم الهاتف" required>
+            <select id="network" required>
+                <option value="">الشبكة</option>
+                <option value="vodafone">فودافون</option>
+                <option value="orange">أورانج</option>
+                <option value="etisalat">اتصالات</option>
+                <option value="we">WE</option>
+            </select>
+            <input type="number" id="amount" placeholder="المبلغ / الباقة" required>
+            <input type="date" id="date">
+            <button type="submit">تأكيد الحجز 💰</button>
+            <button type="button" onclick="clearForm()">مسح</button>
+        </form>
+
+        <div class="total-budget" id="totalBudget">الميزانية الشهرية: 0 ج.م</div>
+
+        <div class="stats">
+            <div class="stat-card">إجمالي الحجوزات: <span id="totalBookings">0</span></div>
+            <div class="stat-card">إجمالي المدفوعات: <span id="totalPaid">0</span> ج.م</div>
+            <div class="stat-card">باقي الشهر: <span id="remaining">0</span> ج.م</div>
+            <div class="stat-card">أعلى شبكة: <span id="topNetwork">-</span></div>
+        </div>
+
+        <div class="monthly-filter">
+            <select id="monthFilter">
+                <option value="all">الكل الشهور</option>
+            </select>
+            <button onclick="exportCSV()">تصدير CSV 📊</button>
+        </div>
+
+        <table id="bookingsTable">
+            <thead>
+                <tr>
+                    <th>الرقم</th>
+                    <th>الشبكة</th>
+                    <th>المبلغ</th>
+                    <th>التاريخ</th>
+                    <th>حالة الدفع</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="bookingsList"></tbody>
+        </table>
+
+        <div class="poster-section">
+            <h3>📱 إنشاء بوستر دعاية</h3>
+            <input type="text" id="posterText" placeholder="نص البوستر (مثال: باقات فودافون بأفضل سعر!)" value="باقات موبايل لكل الشبكات - تواصل معانا الآن!">
+            <button onclick="generatePoster()">إنشاء بوستر</button>
+            <canvas id="posterCanvas"></canvas>
+            <br><button onclick="sharePoster()" class="danger">مشاركة على واتساب 📲</button>
+        </div>
+    </div>
+
+    <script>
+        let bookings = JSON.parse(localStorage.getItem('mobileBookings')) || [];
+        let monthlyBudget = parseFloat(localStorage.getItem('monthlyBudget')) || 5000;
+        let currentMonth = new Date().toISOString().slice(0, 7);
+
+        document.getElementById('totalBudget').textContent = `الميزانية الشهرية: ${monthlyBudget} ج.م`;
+
+        // Tabs للشبكات
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                document.querySelector('.tab.active').classList.remove('active');
+                e.target.classList.add('active');
+                displayBookings();
+            });
+        });
+
+        // إضافة حجز
+        document.getElementById('bookingForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('phone').value;
+            const network = document.getElementById('network').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const date = document.getElementById('date').value || new Date().toISOString().slice(0, 10);
+
+            const booking = { id: Date.now(), phone, network, amount, date, paid: false };
+            bookings.unshift(booking);
+            localStorage.setItem('mobileBookings', JSON.stringify(bookings));
+            displayBookings();
+            clearForm();
+            showBookingConfirmation(booking);
+        });
+
+        function clearForm() {
+            document.getElementById('bookingForm').reset();
+            document.getElementById('date').value = '';
+        }
+
+        function showBookingConfirmation(booking) {
+            const div = document.createElement('div');
+            div.className = 'booking';
+            div.innerHTML = `✅ حجز جديد: ${booking.phone} - ${booking.network} - ${booking.amount} ج.م<br>
+                <button onclick="markPaid(${booking.id})">تم الدفع</button>
+                <button class="danger" onclick="deleteBooking(${booking.id})">حذف</button>`;
+            document.querySelector('.container').insertBefore(div, document.querySelector('form'));
+            setTimeout(() => div.remove(), 10000);
+        }
+
+        function markPaid(id) {
+            const booking = bookings.find(b => b.id === id);
+            if (booking) booking.paid = true;
+            localStorage.setItem('mobileBookings', JSON.stringify(bookings));
+            displayBookings();
+        }
+
+        function deleteBooking(id) {
+            bookings = bookings.filter(b => b.id !== id);
+            localStorage.setItem('mobileBookings', JSON.stringify(bookings));
+            displayBookings();
+        }
+
+        function displayBookings() {
+            const activeTab = document.querySelector('.tab.active').dataset.network;
+            const monthFilter = document.getElementById('monthFilter').value;
+            let filtered = bookings;
+
+            if (activeTab !== 'all') filtered = filtered.filter(b => b.network === activeTab);
+            if (monthFilter !== 'all') filtered = filtered.filter(b => b.date.startsWith(monthFilter));
+
+            const tbody = document.getElementById('bookingsList');
+            tbody.innerHTML = '';
+            filtered.forEach(b => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${b.phone}</td>
+                    <td>${b.network}</td>
+                    <td>${b.amount} ج.م</td>
+                    <td>${b.date}</td>
+                    <td style="color: ${b.paid ? 'green' : 'red'}">${b.paid ? 'مدفوع' : 'غير مدفوع'}</td>
+                    <td>
+                        <button onclick="markPaid(${b.id})" ${b.paid ? 'disabled' : ''}>دفع</button>
+                        <button class="danger" onclick="deleteBooking(${b.id})">حذف</button>
+                    </td>
+                `;
+            });
+            updateStats(filtered);
+            updateMonthFilter();
+        }
+
+        function updateStats(filtered) {
+            const totalBookings = filtered.length;
+            const totalPaid = filtered.filter(b => b.paid).reduce((sum, b) => sum + b.amount, 0);
+            const remaining = monthlyBudget - totalPaid;
+            const networkCounts = {};
+            filtered.forEach(b => networkCounts[b.network] = (networkCounts[b.network] || 0) + 1);
+            const topNetwork = Object.entries(networkCounts).reduce((a, b) => (a[1] > b[1] ? a : b), [])[0] || '-';
+
+            document.getElementById('totalBookings').textContent = totalBookings;
+            document.getElementById('totalPaid').textContent = totalPaid;
+            document.getElementById('remaining').textContent = remaining;
+            document.getElementById('topNetwork').textContent = topNetwork;
+        }
+
+        function updateMonthFilter() {
+            const months = [...new Set(bookings.map(b => b.date.slice(0,7)))];
+            const select = document.getElementById('monthFilter');
+            select.innerHTML = '<option value="all">الكل الشهور</option>';
+            months.forEach(m => {
+                const option = document.createElement('option');
+                option.value = m;
+                option.textContent = new Date(m + '-01').toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' });
+                select.appendChild(option);
+            });
+        }
+
+        function exportCSV() {
+            const csv = 'رقم,شبكة,مبلغ,تاريخ,مدفوع\n' + bookings.map(b => `${b.phone},${b.network},${b.amount},${b.date},${b.paid}`).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bookings_${currentMonth}.csv`;
+            a.click();
+        }
+
+        // بوسترات الدعاية
+        function generatePoster() {
+            const canvas = document.getElementById('posterCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 400;
+            canvas.height = 300;
+
+            // خلفية متدرجة
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, '#ff6b6b');
+            gradient.addColorStop(1, '#4ecdc4');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 400, 300);
+
+            // نص رئيسي
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 28px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(document.getElementById('posterText').value, 200, 150);
+
+            // إضافات
+            ctx.font = 'bold 20px Arial';
+            ctx.fillText('📱 باقات لكل الشبكات', 200, 200);
+            ctx.fillText('اتصل الآن!', 200, 240);
+        }
+
+        function sharePoster() {
+            const canvas = document.getElementById('posterCanvas');
+            const url = canvas.toDataURL();
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent('بوستر دعاية جديد! ' + url)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        // تحديث عند التحميل
+        displayBookings();
+        document.getElementById('monthFilter').addEventListener('change', displayBookings);
+    </script>
+</body>
+</html>
+    
+  </body>
+  
+</html>
