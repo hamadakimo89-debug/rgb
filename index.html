@@ -3,47 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة باقات الموبايل - سحابي</title>
+    <title>إدارة باقات الموبايل</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; border-radius: 15px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        input, select, button { padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; width: 100%; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
         button { background: #3182ce; color: white; border: none; cursor: pointer; }
-        .auth-section { max-width: 400px; margin: auto; }
-        #app-section { display: none; }
     </style>
 </head>
 <body>
 
-    <!-- قسم تسجيل الدخول -->
-    <div id="auth-section" class="container auth-section">
-        <h2>تسجيل الدخول / إنشاء حساب</h2>
+    <div id="auth-section" class="container">
+        <h2>تسجيل الدخول</h2>
         <input type="email" id="email" placeholder="البريد الإلكتروني">
         <input type="password" id="pass" placeholder="كلمة السر">
         <button onclick="login()">دخول</button>
         <button onclick="register()">حساب جديد</button>
     </div>
 
-    <!-- قسم التطبيق -->
-    <div id="app-section" class="container">
-        <h1>🚀 إدارة باقات الموبايل</h1>
-        <button onclick="logout()" style="background:#e53e3e">خروج</button>
+    <div id="app-section" class="container" style="display:none;">
+        <h3>أهلاً بك!</h3>
+        <button onclick="logout()">خروج</button>
         <hr>
-        <form id="bookingForm">
-            <input type="text" id="phone" placeholder="رقم الهاتف" required>
-            <select id="network"><option value="vodafone">فودافون</option><option value="orange">أورانج</option></select>
-            <input type="number" id="amount" placeholder="المبلغ" required>
-            <button type="submit">تأكيد الحجز</button>
-        </form>
-        <div id="bookingsList"></div>
+        <input type="text" id="phone" placeholder="رقم الهاتف">
+        <button onclick="saveData()">إضافة حجز</button>
+        <div id="list"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // إعداداتك هنا
         const firebaseConfig = {
             apiKey: "AIzaSyB_GL73xVPwn_nqxOLUOMGS_UVJJKmew8M",
             authDomain: "ragb-phone.firebaseapp.com",
@@ -57,41 +48,33 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // التحكم في ظهور الأقسام
+        // مراقبة الدخول
         onAuthStateChanged(auth, (user) => {
+            const authDiv = document.getElementById('auth-section');
+            const appDiv = document.getElementById('app-section');
             if (user) {
-                document.getElementById('auth-section').style.display = 'none';
-                document.getElementById('app-section').style.display = 'block';
-                loadBookings(user.uid);
+                authDiv.style.display = 'none';
+                appDiv.style.display = 'block';
+                loadData(user.uid);
             } else {
-                document.getElementById('auth-section').style.display = 'block';
-                document.getElementById('app-section').style.display = 'none';
+                authDiv.style.display = 'block';
+                appDiv.style.display = 'none';
             }
         });
 
         window.login = () => signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('pass').value);
         window.register = () => createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('pass').value);
         window.logout = () => signOut(auth);
-
-        // إضافة حجز للسحابة
-        document.getElementById('bookingForm').onsubmit = async (e) => {
-            e.preventDefault();
-            await addDoc(collection(db, "bookings"), {
-                uid: auth.currentUser.uid,
-                phone: document.getElementById('phone').value,
-                network: document.getElementById('network').value,
-                amount: document.getElementById('amount').value
-            });
+        
+        window.saveData = async () => {
+            await addDoc(collection(db, "data"), { phone: document.getElementById('phone').value, uid: auth.currentUser.uid });
         };
 
-        // جلب البيانات من السحابة
-        function loadBookings(uid) {
-            onSnapshot(query(collection(db, "bookings"), where("uid", "==", uid)), (snapshot) => {
-                let html = '<h3>السجلات:</h3>';
-                snapshot.forEach(doc => {
-                    html += `<div>${doc.data().phone} - ${doc.data().amount} ج.م</div>`;
-                });
-                document.getElementById('bookingsList').innerHTML = html;
+        function loadData(uid) {
+            onSnapshot(query(collection(db, "data"), where("uid", "==", uid)), (snap) => {
+                let html = '';
+                snap.forEach(d => html += `<div>${d.data().phone}</div>`);
+                document.getElementById('list').innerHTML = html;
             });
         }
     </script>
